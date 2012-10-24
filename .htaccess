@@ -1,0 +1,65 @@
+<Files .htaccess>
+        deny from all 
+</Files>
+
+# General Apache options
+Options -Indexes
+Options +FollowSymLinks
+Options +ExecCGI
+
+#CACHE
+<IfModule mod_expires.c>
+        ExpiresActive on
+        ExpiresDefault "access plus 10 years"
+        ExpiresByType image/gif "access plus 1 month"
+        ExpiresByType image/png "access plus 1 month"
+        ExpiresByType image/jpeg "access plus 1 month"
+        ExpiresByType image/x-icon "access plus 1 month"
+        ExpiresByType application/x-javascript "access plus 1 month"
+        ExpiresByType text/css "access plus 1 month"
+        FileETag MTime Size
+</IfModule>
+
+#MOD DEFLATE
+<FilesMatch "\\.(js|css|html|htm|php|xml)$">
+        <IfModule mod_deflate.c>
+                # Insert filter
+                SetOutputFilter DEFLATE
+
+                # Netscape 4.x has some problems...
+                BrowserMatch ^Mozilla/4 gzip-only-text/html
+
+                # Netscape 4.06-4.08 have some more problems
+                BrowserMatch ^Mozilla/4\.0[678] no-gzip
+
+                # MSIE masquerades as Netscape, but it is fine
+                BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+
+                # Excluindo imagens, bin�rios e PDFs
+                SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|ico)$ no-gzip dont-vary
+                SetEnvIfNoCase Request_URI \.(?:exe|t?gz|zip|bz2)$ no-gzip dont-vary
+                SetEnvIfNoCase Request_URI \.pdf$ no-gzip dont-vary
+
+                # Make sure proxies don't deliver the wrong content
+                #Header append Vary User-Agent env=!dont-vary
+
+                # Configurando o n�vel de compress�o
+        #       DeflateCompressionLevel 9
+        #       DeflateBufferSize 8192
+        </IfModule>
+</FilesMatch>
+
+##### Re-directing Begin #####
+<IfModule mod_rewrite.c>
+        RewriteEngine On
+	RewriteBase /
+
+        ErrorDocument 404 /404.html
+        ErrorDocument 401 /404.html
+        ErrorDocument 403 /404.html
+        ErrorDocument 413 /404.html
+
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteCond %{REQUEST_FILENAME} !-d
+	RewriteRule ^(.*)\?*$ index.php?_route_=$1 [L,QSA]
+</IfModule>
