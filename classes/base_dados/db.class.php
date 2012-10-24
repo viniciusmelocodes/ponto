@@ -121,6 +121,7 @@ Class DB {
      * Executa o script passado ou a instrução inserida em $sql
      */
     public function execScript($sql) {
+        $this->dados = array();
         if ($sql) {
             $instrucao = $sql;
         } elseif ($this->sql) {
@@ -128,11 +129,28 @@ Class DB {
         } else {
             exit('Não foi enviada uma instrução para ser executada.');
         }
+        
         if ($instrucao) {
-            $this->resource   = mysql_query($instrucao, $this->conexao);
-            $this->num_linhas = mysql_affected_rows($this->conexao);
-            $this->dados      = mysql_fetch_array($this->resource);
+            if (strpos(strtolower($instrucao), 'elect')) {
+                $this->scriptSelect($instrucao);
+            } else {
+                $this->resource = mysql_query($instrucao, $this->conexao);
+            }
         }
+    }
+    
+    private function scriptSelect ($instrucao) {
+        $this->resource = mysql_query($instrucao, $this->conexao);
+        if ($this->resource) {
+            $this->num_linhas = mysql_affected_rows($this->conexao);
+            while ($linha = mysql_fetch_assoc($this->resource)) {
+                $this->dados[] = $linha;
+            }
+        } else {
+            echo "Não foi possível executar a consulta ($sql) no banco de dados: " . mysql_error();
+            exit;
+        }
+        
     }
 }
 ?>

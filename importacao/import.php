@@ -14,11 +14,17 @@
 include '../default/default.php';
 include __path_classes__ . '/importacao/csv.class.php';
 
+if (!$_REQUEST['arquivo']) {
+    exit('Informe o arquivo para importação.');
+}
+
+$arquivo = $_REQUEST['arquivo'];
+
 /**
  * Lendo os dados do arquivo
  */
 $csv = new CSV();
-$csv->arquivo = __path_base__ . '/importacao/arquivos/2011-11.csv';
+$csv->arquivo = __path_base__ . '/importacao/arquivos/' . $arquivo;
 $csv->lerCsv();
 
 /*
@@ -27,11 +33,27 @@ $csv->lerCsv();
 $db = new DB();
 $db->execScript('SELECT id FROM funcionarios WHERE usuario = "wolmer"');
 if ($db->num_linhas) {
-    $usuario = $db->dados['id'];
+    $usuario = $db->dados[0]['id'];
 } else {
     exit('O funcionário não foi encontrado para incluir os horários.');
 }
 
-echo $usuario;
-
+foreach ($csv->dados as $dados) {
+    $i = 1;
+    $data = split('/', $dados[0]);
+    $data = "{$data[2]}-{$data[1]}-{$data[0]}";
+    while ($i < count($dados)) {
+        if ($dados[$i] || $dados[$i + 1]) {
+            $db->execScript("REPLACE INTO controle_horarios VALUES(
+                            NULL, 
+                            {$usuario}, 
+                            '{$data}', 
+                            '{$dados[$i]}', 
+                            '{$dados[$i + 1]}'
+                        );");
+        }
+        $i += 2;
+    }
+}
+echo 'Importação realizada com sucesso !';
 ?>

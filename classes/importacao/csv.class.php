@@ -23,7 +23,7 @@ Class CSV {
      * Retorno da leitura do arquivo
      * @var array
      */
-    public $resultado = array();
+    public $dados = array();
     
     /**
      * Se vai utilizar a primeira linha como indice para leitura
@@ -55,9 +55,9 @@ Class CSV {
                 if ($linha == 0 && $this->usa_indice) {
                     $indice[] = $data[$i];
                 } elseif ($this->usa_indice) {
-                    $this->resultado[$linha][$indice[$i]] = $data[$i];
+                    $this->dados[$linha][$indice[$i]] = $data[$i];
                 } else {
-                    $this->resultado[$linha][$i] = $data[$i];
+                    $this->dados[$linha][$i] = $data[$i];
                 }
             }   
             $linha++;
