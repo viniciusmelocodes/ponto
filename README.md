@@ -1,4 +1,4 @@
 ponto
 =====
 
-Controle de Ponto Eletronico
+Controle de horários com ponto eletronico
