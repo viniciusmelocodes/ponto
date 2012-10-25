@@ -79,7 +79,7 @@
 	height: 19px;
 	float: left;
 	cursor: pointer;
-	*cursor: hand;
+	cursor: hand;
 	color: #111 !important;
 }
 .paginate_disabled_previous:hover, .paginate_enabled_previous:hover,
@@ -500,6 +500,9 @@ tr.even.gradeU td.sorting_3 {
 /*
  * Row highlighting example
  */
+ #example td {
+     border: 2px solid #FFF;
+ }
 .ex_highlight #example tbody tr.even:hover, #example tbody tr.even td.highlighted {
 	background-color: #ECFFB3;
 }

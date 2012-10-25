@@ -12,11 +12,17 @@
  */
 
 include '../default/default.php';
+include __path_classes__ . '/genericas/datahora.class.php';
+
+/**
+ * Instaciando as classes
+ */
+$db = new DB();
+$dh = new DATAHORA();
 
 /*
  * Busca o usuário
  */
-$db = new DB();
 $db->execScript('SELECT id FROM funcionarios WHERE usuario = "wolmer"');
 if ($db->num_linhas) {
     $usuario = $db->dados[0]['id'];
@@ -33,7 +39,7 @@ $db->execScript("
             TIMEDIFF(saida2, entrada2) as diff2
         FROM horarios_padrao WHERE id_funcionario = {$usuario}
     ");
-$hora_padrao = soma_hora($db->dados[0]['diff1'], $db->dados[0]['diff2']);
+$hora_padrao = $dh->somar_hora($db->dados[0]['diff1'], $db->dados[0]['diff2']);
 
 /*
  * Busca as horas do funcionario
@@ -50,21 +56,28 @@ $horas = array();
 $entradas = 1;
 for ($i = 0; $i < count($db->dados); $i++) {
     $dados = $db->dados[$i];
-    $data = split('-', $dados['data']);
-    $horas[$j]['data'] = $data[2] . '/' . $data[1] . '/' . $data[0];
+    $horas[$j]['data'] = str_replace('-', '/', $dados['data']);
     $horas[$j]['entrada_' . $k] = $dados['entrada'];
     $horas[$j]['saida_' . $k] = $dados['saida'];
     
     if ($k > 1) {
-        $horas[$j]['diferenca'] = soma_hora(
+        $horas[$j]['diferenca'] = $dh->somar_hora(
                 $horas[$j]['diferenca'], $dados['diferenca']
             );
     } else {
         $horas[$j]['diferenca'] = $dados['diferenca'];
     }
-    $horas[$j]['saldo'] = subtrai_hora($horas[$j]['diferenca'], $hora_padrao);
+    $horas[$j]['saldo'] = $dh->subtrair_hora($horas[$j]['diferenca'], $hora_padrao);
     
     if ($db->dados[$i + 1]['data'] != $dados['data']) {
+        if (isset ($horas[$j-1]['banco'])) {
+            $horas[$j]['banco'] = $dh->somar_hora(
+                    $horas[$j]['saldo'], $horas[$j-1]['banco']
+                );
+        } else {
+            $horas[$j]['banco'] = $horas[$j]['saldo'];
+        }
+        
         $j++;
         $k = 1;
     } else {
@@ -74,27 +87,6 @@ for ($i = 0; $i < count($db->dados); $i++) {
         }
     }
 
-}
-
-function soma_hora ($hora1, $hora2) {
-    $hora1 = split(':', $hora1);
-    $hora2 = split(':', $hora2);
-    $min   = $hora1[1] + $hora2[1];
-    $hora  = (int)($min / 60);
-    $min  -= $hora * 60;
-    $hora += $hora1[0] + $hora2[0];
-    $hora  = ($hora < 10 ? '0' . $hora : $hora);
-    $min   = ($min < 10 ? '0' . $min : $min);
-    return "{$hora}:{$min}:00";
-}
-
-function subtrai_hora ($hora1, $hora2) {
-    $hora1 = split(':', $hora1);
-    $hora2 = split(':', $hora2);
-    $min = (60 - $hora1[1]);
-    $hora = ($min > 0 ? -1 : 0);
-    $hora = ($hora1[0] - $hora2[0]) - $hora;
-    return "{$hora}:{$min}:00";
 }
 ?>
 
@@ -123,6 +115,7 @@ function subtrai_hora ($hora1, $hora2) {
                         <?php } ?>
                         <th>Total</th> 
                         <th>Saldo</th> 
+                        <th>Banco</th> 
                     </tr> 
                 </thead> 
                 <tbody> 
@@ -137,6 +130,7 @@ function subtrai_hora ($hora1, $hora2) {
                         <?php } ?>
                         <td><?php echo $dados['diferenca'];?></td> 
                         <td><?php echo $dados['saldo'];?></td> 
+                        <td><?php echo $dados['banco'];?></td> 
                     </tr> 
                     <?php } ?> 
                 </tbody> 
